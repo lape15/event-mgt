@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -46,4 +47,16 @@ func doesUserExist(id string) bool {
 	} else {
 		return false
 	}
+}
+
+func isUserHostOfEvent(userID string, eventID int) bool {
+
+	var hostID int
+	err := db.QueryRow("SELECT user_id FROM events WHERE id = ?", eventID).Scan(&hostID)
+	if err != nil {
+		fmt.Println("Error checking host:", err)
+		return false
+	}
+	userIDInt, _ := strconv.Atoi(userID)
+	return userIDInt == hostID
 }

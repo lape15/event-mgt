@@ -22,6 +22,13 @@ func rsvpEvent(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	if isUserHostOfEvent(userID, rsvp.EventId) {
+		res.WriteHeader(http.StatusForbidden)
+		res.Write([]byte("You cannot RSVP to your own event!"))
+		return
+	}
+
 	var exists = doesUserExist(rsvp.Email)
 	if !exists {
 		res.WriteHeader(http.StatusForbidden)
