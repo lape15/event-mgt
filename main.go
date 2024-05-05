@@ -21,6 +21,7 @@ func main() {
 	r.HandleFunc("/signup", signup).Methods("POST")
 	r.HandleFunc("/events", protectedHandler(handleEventRequest))
 	r.HandleFunc("/events/{id}", singleEventHandler)
+	r.HandleFunc("/event/rsvp", rsvpEvent)
 	r.HandleFunc("/", handleRequest)
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)

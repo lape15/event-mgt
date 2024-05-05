@@ -26,7 +26,7 @@ type CredentialId struct {
 
 func scanDb(email, userName string) (CredentialId, error) {
 	var user CredentialId
-	// err := db.QueryRow("SELECT email, username, password,user_id  FROM (SELECT * FROM users WHERE email = ? UNION SELECT * FROM users WHERE username = ?) AS combined_results LIMIT 1", email, userName).Scan(&user.Email, &user.Username, &user.Password, &user.Id)
+
 	err := db.QueryRow("SELECT email, username, password,user_id FROM users WHERE email = ? or username = ? LIMIT 1", email, userName).Scan(&user.Email, &user.Username, &user.Password, &user.Id)
 	if err != nil {
 		log.Fatal(err)
@@ -62,12 +62,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			fmt.Print(err.Error())
 		}
-		response := struct {
-			Email    string `json:"email"`
-			Username string `json:"username"`
-			Token    string `json:"token"`
-			Id       int    `json:"id"`
-		}{
+		response := UserCache{
 			Email:    result.Email,
 			Username: result.Username,
 			Token:    tokenString,

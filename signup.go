@@ -110,12 +110,25 @@ func signup(res http.ResponseWriter, req *http.Request) {
 
 	fmt.Printf("Rows affected: %d\n", rowsAffected)
 	tokenString, err := createToken(credential.Username)
+
 	if err != nil {
 
 		panic(err.Error())
 	}
+	response := UserCache{
+		Email:    credential.Email,
+		Username: credential.Username,
+		Token:    tokenString,
+		// Id:       credential.Id,
+	}
+	responseJson, err := json.Marshal(response)
+	c.update(response.Email, response)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(tokenString))
+	res.Write(responseJson)
 
 }
