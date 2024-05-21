@@ -30,7 +30,7 @@ func main() {
 		User:                 os.Getenv("DB_USER"),
 		Passwd:               os.Getenv("DB_PASS"),
 		Net:                  "tcp",
-		Addr:                 "127.0.0.1:3306",
+		Addr:                 "sql11.freesqldatabase.com",
 		DBName:               os.Getenv("DB_NAME"),
 		AllowNativePasswords: true,
 	}
@@ -47,6 +47,7 @@ func main() {
 	}
 	fmt.Println("Connected!")
 	http.ListenAndServe(":8000", r)
+	defer db.Close()
 }
 
 func handleEventRequest(res http.ResponseWriter, req *http.Request) {
@@ -66,6 +67,8 @@ func singleEventHandler(res http.ResponseWriter, req *http.Request) {
 		editEvent(res, req)
 	case http.MethodDelete:
 		deleteEvent(res, req)
+	case http.MethodGet:
+		getEvent(res, req)
 	default:
 		fmt.Print(http.MethodPatch)
 		http.Error(res, "Method not allowed there", http.StatusMethodNotAllowed)

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	""
 )
 
 type Event struct {
@@ -48,19 +49,13 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 		fmt.Println("Error:", errn)
 	}
 	event.OrganizerID = num
-	start := event.Start.Format("2006-01-02 15:04:05")
-	end := event.End.Format("2006-01-02 15:04:05")
 
-	insert, err := db.Exec("INSERT INTO events(name,description,start,end,location,event_limit,organizer_id) VALUES (?, ?, ?,?, ?, ?,?)", event.Name, event.Description, start, end, event.Location, event.EventLimit, event.OrganizerID)
+	insert, err := db.Query("INSERT INTO events(name,description,start,end,location,event_limit,organizer_id) VALUES (?, ?, ?,?, ?, ?,?)", event.Name, event.Description, event.Start, event.End, event.Location, event.EventLimit, event.OrganizerID)
 	if err != nil {
 		panic(err.Error())
 	}
-	// defer insert.Close()
-	// rowsAffected, errs := q.RowsAffected()
-	if err != nil {
-		panic(err.Error())
-	}
-	rowsAffected, errs := insert.RowsAffected()
+	defer insert.Close()
+	rowsAffected, errs := q.RowsAffected()
 	if errs != nil {
 		fmt.Print("Error here")
 	}

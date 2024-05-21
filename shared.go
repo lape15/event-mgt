@@ -60,3 +60,12 @@ func isUserHostOfEvent(userID string, eventID int) bool {
 	userIDInt, _ := strconv.Atoi(userID)
 	return userIDInt == hostID
 }
+
+func getEventRSVPCount(eventID string) (int, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM event_rsvps WHERE event_id = ?", eventID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
