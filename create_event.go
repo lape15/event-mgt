@@ -75,7 +75,6 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Print(q)
-	fmt.Printf("%v%s\n", event, userID)
 	res.Header().Set("Content-Type", "application/json")
 	res.Write(jsonResponse)
 
