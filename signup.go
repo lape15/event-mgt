@@ -32,6 +32,18 @@ type Error interface {
 	Error() string
 }
 
+type PasswordHasher interface {
+	HashPassword(password string) string
+}
+
+var passwordHasher PasswordHasher = DefaultHasher{}
+
+type DefaultHasher struct{}
+
+func (h DefaultHasher) HashPassword(password string) string {
+	return generatePasswordHash(password)
+}
+
 var secretKey = []byte("secret-key")
 
 func generatePasswordHash(password string) string {
@@ -88,7 +100,7 @@ func signup(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	credential.Password = generatePasswordHash(credential.Password)
+	credential.Password = passwordHasher.HashPassword(credential.Password)
 	sqlFile, err := os.ReadFile("tables/users.sql")
 
 	if err != nil {
@@ -98,12 +110,13 @@ func signup(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	insert, err := db.Query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
+	insert, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
 	if err != nil {
 		panic(err.Error())
 	}
-	defer insert.Close()
-	rowsAffected, errs := q.RowsAffected()
+	// defer insert.Close()
+	// rowsAffected, errs := q.RowsAffected()
+	rowsAffected, errs := insert.RowsAffected()
 	if errs != nil {
 		fmt.Print("Error here")
 	}
@@ -121,6 +134,7 @@ func signup(res http.ResponseWriter, req *http.Request) {
 		Token:    tokenString,
 		// Id:       credential.Id,
 	}
+	fmt.Print(q)
 	responseJson, err := json.Marshal(response)
 	c.update(response.Email, response)
 	if err != nil {
