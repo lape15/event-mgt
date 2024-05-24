@@ -55,6 +55,7 @@
 
 #     - name: Test
 #       run: go test -v ./...
+
 name: Go
 
 on:
@@ -108,6 +109,9 @@ jobs:
 
       - name: Test
         run: go test -v ./...
+
+      - name: Print SSH private key length for debugging
+        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" | wc -c
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
