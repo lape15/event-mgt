@@ -1,22 +1,76 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+# # This workflow will build a golang project
+# # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+# name: Go
+
+# # Trigger workflows on push or pull request events on the main branch
+# on:
+#   push:
+#     branches: [ "main" ]
+#     paths:
+#       - '**/*.go'
+#       - 'go.mod'
+#       - 'go.sum'
+#   pull_request:
+#     branches: [ "main" ]
+#     paths:
+#       - '**/*.go'
+#       - 'go.mod'
+#       - 'go.sum'
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     strategy:
+#       matrix:
+#         go-version: ['1.21.6']
+#         os: [ubuntu-latest]
+
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
+
+#     - name: Set up Go
+#       uses: actions/setup-go@v4
+#       with:
+#         go-version: ${{ matrix.go-version }}
+
+#     - name: Cache Go modules
+#       id: cache-go-mod
+#       uses: actions/cache@v4
+#       with:
+#         path: |
+#           ~/.cache/go-build
+#           ~/go/pkg/mod
+#         key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+#         restore-keys: |
+#           ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+#     - name: Install dependencies
+#       run: go mod download
+
+#     - name: Build
+#       run: go build -v ./...
+
+#     - name: Test
+#       run: go test -v ./...
 
 name: Go
 
-# Trigger workflows on push or pull request events on the main branch
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
 
 jobs:
   build:
@@ -24,34 +78,50 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.21.6']
+        go-version: ["1.21.6"]
         os: [ubuntu-latest]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ matrix.go-version }}
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      id: cache-go-mod
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
+      - name: Cache Go modules
+        id: cache-go-mod
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - name: Install dependencies
-      run: go mod download
+      - name: Install dependencies
+        run: go mod download
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v -o eventApp ./...
 
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        run: go test -v ./...
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy files to EC2
+        run: scp -o StrictHostKeyChecking=no -r eventApp ec2-user@<YOUR_EC2_PUBLIC_DNS>:/home/ec2-user/eventApp
+
+      - name: SSH into EC2 and build and run
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-158-42-79.compute-1.amazonaws.com << 'EOF'
+            cd /home/ec2-user
+            sudo pkill eventApp || true
+            ./eventApp &
+          EOF
