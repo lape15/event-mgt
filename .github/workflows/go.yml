@@ -115,12 +115,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Test SSH connectivity
+        run: ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} echo "SSH connected successfully"
+
       - name: Copy files to EC2
-        run: scp -o StrictHostKeyChecking=no -r ./eventApp ubuntu@${{secrets.EC2_HOST}}:/home/ec2-user/eventApp
+        run: scp -o StrictHostKeyChecking=no -r ./eventApp ubuntu@${{ secrets.EC2_HOST }}:/home/ec2-user/eventApp
 
       - name: SSH into EC2 and build and run
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{secrets.EC2_HOST}} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/ec2-user
             sudo pkill eventApp || true
             ./eventApp &
