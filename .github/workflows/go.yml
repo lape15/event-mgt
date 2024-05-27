@@ -115,8 +115,8 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Test SSH connectivity
-        run: ssh -vvv -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} echo "SSH connected successfully"
+      # - name: Test SSH connectivity
+      #   run: ssh -vvv -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} echo "SSH connected successfully"
 
       - name: Copy files to EC2
         run: scp -o StrictHostKeyChecking=no -r ./eventApp ubuntu@${{ secrets.EC2_HOST }}:/home/ec2-user/eventApp
