@@ -55,8 +55,7 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	// defer insert.Close()
-	// rowsAffected, errs := q.RowsAffected()
+
 	if err != nil {
 		panic(err.Error())
 	}
