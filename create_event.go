@@ -55,8 +55,7 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	// defer insert.Close()
-	// rowsAffected, errs := q.RowsAffected()
+
 	if err != nil {
 		panic(err.Error())
 	}
@@ -75,7 +74,6 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Print(q)
-	fmt.Printf("%v%s\n", event, userID)
 	res.Header().Set("Content-Type", "application/json")
 	res.Write(jsonResponse)
 
