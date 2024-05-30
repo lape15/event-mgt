@@ -64,16 +64,21 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > event_server.pem
+          chmod 400 event_server.pem
+
       - name: Test SSH connectivity
-        run: ssh -vvv -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} echo "SSH connected successfully"
+        run: ssh -vvv -o StrictHostKeyChecking=no -i event_server.pem ubuntu@${{ secrets.EC2_HOST }} echo "SSH connected successfully"
 
       - name: Copy files to EC2
-        run: scp -o StrictHostKeyChecking=no -r ./eventApp ubuntu@${{ secrets.EC2_HOST }}:/home/ec2-user/eventApp
+        run: scp -o StrictHostKeyChecking=no -i event_server.pem -r ./eventApp ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/eventApp
 
       - name: SSH into EC2 and build and run
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/ec2-user
+          ssh -o StrictHostKeyChecking=no -i event_server.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/eventApp
             sudo pkill eventApp || true
             ./eventApp &
           EOF
