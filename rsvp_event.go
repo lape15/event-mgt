@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"event-mgt/database"
+	"event-mgt/shared"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,13 +25,13 @@ func rsvpEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if isUserHostOfEvent(userID, rsvp.EventId) {
+	if shared.IsUserHostOfEvent(userID, rsvp.EventId) {
 		res.WriteHeader(http.StatusForbidden)
 		res.Write([]byte("You cannot RSVP to your own event!"))
 		return
 	}
 
-	var exists = doesUserExist(rsvp.Email)
+	var exists = shared.DoesUserExist(rsvp.Email)
 	if !exists {
 		res.WriteHeader(http.StatusForbidden)
 		res.Write([]byte("User must have an account to rsvp an event!"))
@@ -39,7 +41,7 @@ func rsvpEvent(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	q, err := db.Exec(string(sqlFile))
+	q, err := database.Db.Exec(string(sqlFile))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -48,7 +50,7 @@ func rsvpEvent(res http.ResponseWriter, req *http.Request) {
 		fmt.Println("Error:", errn)
 	}
 	rsvp.EventId = num
-	insert, err := db.Query("INSERT INTO event_rsvps(event_id,user_id)", rsvp.EventId, userID)
+	insert, err := database.Db.Query("INSERT INTO event_rsvps(event_id,user_id)", rsvp.EventId, userID)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -1,4 +1,4 @@
-package main
+package signup
 
 import (
 	"encoding/json"
@@ -8,16 +8,13 @@ import (
 	"os"
 	"time"
 
+	"event-mgt/database"
+	"event-mgt/shared"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type Credential struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-}
 
 type Claims struct {
 	Username string `json:"username"`
@@ -46,7 +43,7 @@ func generatePasswordHash(password string) string {
 	return string(pass)
 }
 
-func createToken(username string) (string, error) {
+func CreateToken(username string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		Username: username,
@@ -65,9 +62,9 @@ func createToken(username string) (string, error) {
 	return tokenString, nil
 }
 
-func signup(res http.ResponseWriter, req *http.Request) {
+func Signup(res http.ResponseWriter, req *http.Request) {
 
-	var credential Credential
+	var credential shared.Credential
 	err := json.NewDecoder(req.Body).Decode(&credential)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
@@ -75,7 +72,8 @@ func signup(res http.ResponseWriter, req *http.Request) {
 	}
 	var emailCount int
 
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", credential.Email).Scan(&emailCount)
+	row, err := database.Db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", credential.Email)
+	row.Scan(&emailCount)
 
 	if err != nil {
 		fmt.Println("Error querying database:", err)
@@ -94,11 +92,11 @@ func signup(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	q, err := db.Exec(string(sqlFile))
+	q, err := database.Db.Exec(string(sqlFile))
 	if err != nil {
 		panic(err.Error())
 	}
-	insert, err := db.Query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
+	insert, err := database.Db.Query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -109,20 +107,20 @@ func signup(res http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Printf("Rows affected: %d\n", rowsAffected)
-	tokenString, err := createToken(credential.Username)
+	tokenString, err := CreateToken(credential.Username)
 
 	if err != nil {
 
 		panic(err.Error())
 	}
-	response := UserCache{
+	response := shared.UserCache{
 		Email:    credential.Email,
 		Username: credential.Username,
 		Token:    tokenString,
 		// Id:       credential.Id,
 	}
 	responseJson, err := json.Marshal(response)
-	c.update(response.Email, response)
+	shared.C.Update(response.Email, response)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

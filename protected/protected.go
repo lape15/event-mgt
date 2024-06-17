@@ -1,4 +1,4 @@
-package main
+package protected
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var secretKey = []byte("secret-key")
 
 func verifyToken(token string) error {
 	tkn, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
@@ -20,13 +22,13 @@ func verifyToken(token string) error {
 	return nil
 }
 
-func protectedHandler(next http.HandlerFunc) http.HandlerFunc {
+func ProtectedHandler(next http.HandlerFunc) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("Cntent-Type", "application/json")
 		token := req.Header.Get("Authorization")
 		if token == "" {
 			res.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(res, "Missing authorization header")
+			fmt.Fprint(res, "you are not authorized!")
 			return
 		}
 		token = token[len("Bearer "):]
