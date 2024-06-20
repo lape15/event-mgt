@@ -28,15 +28,19 @@ type Res struct {
 	Event   Event  `json:"event"`
 }
 
-func CreateEvent(res http.ResponseWriter, req *http.Request) {
+func CreateEvent(res http.ResponseWriter, req *http.Request, sqlFilePath string) {
 	var event Event
 	userID := req.Header.Get("User-ID")
+	if userID == "" {
+		http.Error(res, "User id missing in request header!", http.StatusBadRequest)
+		return
+	}
 	err := json.NewDecoder(req.Body).Decode(&event)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	sqlFile, err := os.ReadFile("tables/event.sql")
+	sqlFile, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}

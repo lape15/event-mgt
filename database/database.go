@@ -33,6 +33,10 @@ func (db *Database) Exec(query string, args ...interface{}) (sql.Result, error) 
 	return result, err
 }
 
+func (d *Database) SetDB(db *sql.DB) {
+	d.db = db
+}
+
 var Db Database
 
 func ConnectDb() {

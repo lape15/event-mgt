@@ -1,4 +1,4 @@
-package main
+package events
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ type Rsvp struct {
 	Email   string `json:"email"`
 }
 
-func rsvpEvent(res http.ResponseWriter, req *http.Request) {
+func RsvpEvent(res http.ResponseWriter, req *http.Request) {
 	var rsvp Rsvp
 	userID := req.Header.Get("User-ID")
 	err := json.NewDecoder(req.Body).Decode(&rsvp)

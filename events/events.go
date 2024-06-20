@@ -1,7 +1,8 @@
-package main
+package events
 
 import (
 	"encoding/json"
+	"event-mgt/database"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ func getEvents(id int) ([]QueriedEvent, error) {
 	var events []QueriedEvent
 	query := "SELECT event_id, name, description, start, end, location, event_limit FROM events WHERE organizer_id = ?"
 
-	rows, err := db.Query(query, id)
+	rows, err := database.Db.Query(query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func getEvents(id int) ([]QueriedEvent, error) {
 	return events, nil
 }
 
-func getUserEvents(res http.ResponseWriter, req *http.Request) {
+func GetUserEvents(res http.ResponseWriter, req *http.Request) {
 
 	userId := req.Header.Get("User-ID")
 	num, err := strconv.Atoi(userId)
