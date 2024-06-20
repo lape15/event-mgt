@@ -1,10 +1,14 @@
-package main
+package login
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+
+	"event-mgt/database"
+	"event-mgt/shared"
+	"event-mgt/signup"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,14 +24,15 @@ func comparePassword(hashed, password string) (bool, error) {
 }
 
 type CredentialId struct {
-	Credential
+	shared.Credential
 	Id int
 }
 
 func scanDb(email, userName string) (CredentialId, error) {
 	var user CredentialId
 
-	err := db.QueryRow("SELECT email, username, password,user_id FROM users WHERE email = ? or username = ? LIMIT 1", email, userName).Scan(&user.Email, &user.Username, &user.Password, &user.Id)
+	row, err := database.Db.QueryRow("SELECT email, username, password,user_id FROM users WHERE email = ? or username = ? LIMIT 1", email, userName)
+	row.Scan(&user.Email, &user.Username, &user.Password, &user.Id)
 	if err != nil {
 		log.Fatal(err)
 		return CredentialId{}, err
@@ -35,8 +40,8 @@ func scanDb(email, userName string) (CredentialId, error) {
 	return user, nil
 }
 
-func login(res http.ResponseWriter, req *http.Request) {
-	var user Credential
+func Login(res http.ResponseWriter, req *http.Request) {
+	var user shared.Credential
 	err := json.NewDecoder(req.Body).Decode(&user)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
@@ -58,11 +63,11 @@ func login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if valid {
-		tokenString, err := createToken(user.Username)
+		tokenString, err := signup.CreateToken(user.Username)
 		if err != nil {
 			fmt.Print(err.Error())
 		}
-		response := UserCache{
+		response := shared.UserCache{
 			Email:    result.Email,
 			Username: result.Username,
 			Token:    tokenString,

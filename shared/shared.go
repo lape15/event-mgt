@@ -1,9 +1,11 @@
-package main
+package shared
 
 import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"event-mgt/database"
 
 	"github.com/patrickmn/go-cache"
 )
@@ -19,6 +21,12 @@ type allCache struct {
 	users *cache.Cache
 }
 
+type Credential struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Username string `json:"username"`
+}
+
 const (
 	defaultExpiration = 5 * time.Minute
 	purgeTime         = 10 * time.Minute
@@ -31,15 +39,15 @@ func newCache() *allCache {
 	}
 }
 
-func (c *allCache) update(id string, user UserCache) {
+func (c *allCache) Update(id string, user UserCache) {
 	c.users.Set(id, user, cache.DefaultExpiration)
 }
 
-var c = newCache()
+var C = newCache()
 
-func doesUserExist(id string) bool {
+func DoesUserExist(id string) bool {
 	fmt.Print("it does exists")
-	user, ok := c.users.Get(id)
+	user, ok := C.users.Get(id)
 	if ok {
 		fmt.Print("He exists oh!")
 		fmt.Printf("%s", user)
@@ -49,10 +57,11 @@ func doesUserExist(id string) bool {
 	}
 }
 
-func isUserHostOfEvent(userID string, eventID int) bool {
+func IsUserHostOfEvent(userID string, eventID int) bool {
 
 	var hostID int
-	err := db.QueryRow("SELECT user_id FROM events WHERE id = ?", eventID).Scan(&hostID)
+	row, err := database.Db.QueryRow("SELECT user_id FROM events WHERE id = ?", eventID)
+	row.Scan(&hostID)
 	if err != nil {
 		fmt.Println("Error checking host:", err)
 		return false
@@ -61,9 +70,10 @@ func isUserHostOfEvent(userID string, eventID int) bool {
 	return userIDInt == hostID
 }
 
-func getEventRSVPCount(eventID string) (int, error) {
+func GetEventRSVPCount(eventID string) (int, error) {
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM event_rsvps WHERE event_id = ?", eventID).Scan(&count)
+	row, err := database.Db.QueryRow("SELECT COUNT(*) FROM event_rsvps WHERE event_id = ?", eventID)
+	row.Scan(&count)
 	if err != nil {
 		return 0, err
 	}

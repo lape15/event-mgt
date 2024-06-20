@@ -1,4 +1,4 @@
-package main
+package events
 
 import (
 	"encoding/json"
@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"event-mgt/database"
+
 	"github.com/gorilla/mux"
 )
 
-func editEvent(res http.ResponseWriter, req *http.Request) {
+func EditEvent(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	var editedEvent Event
 	eventId, _ := strconv.Atoi(vars["id"])
@@ -28,7 +30,7 @@ func editEvent(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	result, err := db.Exec(query, editedEvent.Name, editedEvent.Description, editedEvent.Start, editedEvent.End, editedEvent.Location, editedEvent.EventLimit, eventId, id)
+	result, err := database.Db.Exec(query, editedEvent.Name, editedEvent.Description, editedEvent.Start, editedEvent.End, editedEvent.Location, editedEvent.EventLimit, eventId, id)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
