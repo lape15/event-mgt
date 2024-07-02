@@ -29,7 +29,17 @@ type Error interface {
 	Error() string
 }
 
-var secretKey = []byte("secret-key")
+type PasswordHasher interface {
+	HashPassword(password string) string
+}
+
+var NewPasswordHasher PasswordHasher = DefaultHasher{}
+
+type DefaultHasher struct{}
+
+func (h DefaultHasher) HashPassword(password string) string {
+	return generatePasswordHash(password)
+}
 
 func generatePasswordHash(password string) string {
 	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -42,6 +52,8 @@ func generatePasswordHash(password string) string {
 	}
 	return string(pass)
 }
+
+var secretKey = []byte("secret-key")
 
 func CreateToken(username string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
@@ -62,7 +74,7 @@ func CreateToken(username string) (string, error) {
 	return tokenString, nil
 }
 
-func Signup(res http.ResponseWriter, req *http.Request) {
+func Signup(res http.ResponseWriter, req *http.Request, sqlFilePath string) {
 
 	var credential shared.Credential
 	err := json.NewDecoder(req.Body).Decode(&credential)
@@ -86,8 +98,8 @@ func Signup(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	credential.Password = generatePasswordHash(credential.Password)
-	sqlFile, err := os.ReadFile("tables/users.sql")
+	credential.Password = NewPasswordHasher.HashPassword(credential.Password)
+	sqlFile, err := os.ReadFile(sqlFilePath)
 
 	if err != nil {
 		log.Fatal(err)
@@ -96,12 +108,12 @@ func Signup(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	insert, err := database.Db.Query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
+	insert, err := database.Db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", credential.Username, credential.Email, credential.Password)
 	if err != nil {
 		panic(err.Error())
 	}
-	defer insert.Close()
-	rowsAffected, errs := q.RowsAffected()
+	// defer insert.Close()
+	rowsAffected, errs := insert.RowsAffected()
 	if errs != nil {
 		fmt.Print("Error here")
 	}
@@ -119,6 +131,7 @@ func Signup(res http.ResponseWriter, req *http.Request) {
 		Token:    tokenString,
 		// Id:       credential.Id,
 	}
+	fmt.Print(q)
 	responseJson, err := json.Marshal(response)
 	shared.C.Update(response.Email, response)
 	if err != nil {

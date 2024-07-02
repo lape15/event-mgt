@@ -16,7 +16,10 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/login", login.Login).Methods("POST")
-	r.HandleFunc("/signup", signup.Signup).Methods("POST")
+	// r.HandleFunc("/signup", signup.Signup("hello")).Methods("POST")
+	r.HandleFunc("/signup", func(res http.ResponseWriter, req *http.Request) {
+		signup.Signup(res, req, "tables/users.sql")
+	}).Methods("POST")
 	r.HandleFunc("/events", protected.ProtectedHandler(handleEventRequest))
 	r.HandleFunc("/events/{id}", singleEventHandler)
 	r.HandleFunc("/event/rsvp", events.RsvpEvent)

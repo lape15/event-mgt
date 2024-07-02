@@ -57,13 +57,6 @@ func TestCreateEvent(t *testing.T) {
 	database.Db.SetDB(mockDB)
 	defer func() { database.Db = oldDB }()
 
-	// Create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
-	// rr := httptest.NewRecorder()
-	// handler := http.HandlerFunc(events.CreateEvent)
-
-	// // Serve the HTTP request to the ResponseRecorder
-	// handler.ServeHTTP(rr, req)
-
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		events.CreateEvent(res, req, "../tables/event.sql")
