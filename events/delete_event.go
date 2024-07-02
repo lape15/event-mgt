@@ -1,6 +1,7 @@
-package main
+package events
 
 import (
+	"event-mgt/database"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,13 +9,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func deleteEvent(res http.ResponseWriter, req *http.Request) {
+func DeleteEvent(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	eventId, _ := strconv.Atoi(vars["id"])
 	userId := req.Header.Get("User-ID")
 	id, errs := strconv.Atoi(userId)
 	query := "DELETE FROM events WHERE event_id = ? AND organizer_id = ?"
-	result, err := db.Exec(query, eventId, id)
+	result, err := database.Db.Exec(query, eventId, id)
 	if errs != nil {
 		fmt.Println("Error:", err)
 	}

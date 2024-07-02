@@ -1,7 +1,8 @@
-package main
+package events
 
 import (
 	"encoding/json"
+	"event-mgt/database"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,19 +28,23 @@ type Res struct {
 	Event   Event  `json:"event"`
 }
 
-func createEvent(res http.ResponseWriter, req *http.Request) {
+func CreateEvent(res http.ResponseWriter, req *http.Request, sqlFilePath string) {
 	var event Event
 	userID := req.Header.Get("User-ID")
+	if userID == "" {
+		http.Error(res, "User id missing in request header!", http.StatusBadRequest)
+		return
+	}
 	err := json.NewDecoder(req.Body).Decode(&event)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	sqlFile, err := os.ReadFile("tables/event.sql")
+	sqlFile, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	q, err := db.Exec(string(sqlFile))
+	q, err := database.Db.Exec(string(sqlFile))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -51,15 +56,15 @@ func createEvent(res http.ResponseWriter, req *http.Request) {
 	start := event.Start.Format("2006-01-02 15:04:05")
 	end := event.End.Format("2006-01-02 15:04:05")
 
-	insert, err := db.Exec("INSERT INTO events(name,description,start,end,location,event_limit,organizer_id) VALUES (?, ?, ?,?, ?, ?,?)", event.Name, event.Description, start, end, event.Location, event.EventLimit, event.OrganizerID)
+	insert, err := database.Db.Exec("INSERT INTO events(name,description,start,end,location,event_limit,organizer_id) VALUES (?, ?, ?,?, ?, ?,?)", event.Name, event.Description, start, end, event.Location, event.EventLimit, event.OrganizerID)
 	if err != nil {
 		panic(err.Error())
 	}
 	// defer insert.Close()
 	// rowsAffected, errs := q.RowsAffected()
-	if err != nil {
-		panic(err.Error())
-	}
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 	rowsAffected, errs := insert.RowsAffected()
 	if errs != nil {
 		fmt.Print("Error here")

@@ -1,4 +1,4 @@
-package main
+package events
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"event-mgt/database"
 
 	"github.com/gorilla/mux"
 )
@@ -19,13 +21,14 @@ type AEvent struct {
 	EventLimit  int       `json:"event_limit"`
 }
 
-func getEvent(res http.ResponseWriter, req *http.Request) {
+func GetEvent(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	var event AEvent
 	var start, end []byte
 	eventId, _ := strconv.Atoi(vars["id"])
 
-	err := db.QueryRow("SELECT name, description, start, end, location, event_limit FROM events WHERE event_id = ?", eventId).Scan(
+	row, err := database.Db.QueryRow("SELECT name, description, start, end, location, event_limit FROM events WHERE event_id = ?", eventId)
+	row.Scan(
 		&event.Name, &event.Description, &start, &end, &event.Location, &event.EventLimit)
 	if err != nil {
 		log.Fatal(err)
