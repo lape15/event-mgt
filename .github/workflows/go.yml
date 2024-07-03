@@ -1,22 +1,22 @@
-# This workflow will build a golang project
+# This workflow will build and deploy a Go project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: Deploy
 
 # Trigger workflows on push or pull request events on the main branch
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
 
 jobs:
   build:
@@ -24,34 +24,54 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.21.6']
+        go-version: ["1.21.6"]
         os: [ubuntu-latest]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ matrix.go-version }}
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      id: cache-go-mod
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
+      - name: Cache Go modules
+        id: cache-go-mod
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - name: Install dependencies
-      run: go mod download
+      - name: Install dependencies
+        run: go mod download
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v
 
-    - name: Test
-      run: go test -v ./...
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to EC2
+        env:
+          SERVER_USER: ec2-user
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          PROJECT_DIR: /home/ec2-user/myproject
+          PEM_FILE: /path/to/your/pem/file
+        run: |
+          ssh -i "$PEM_FILE" $SERVER_USER@$SERVER_IP "mkdir -p $PROJECT_DIR"
+          scp -i "$PEM_FILE" yourapp $SERVER_USER@$SERVER_IP:$PROJECT_DIR/yourapp
+          ssh -i "$PEM_FILE" $SERVER_USER@$SERVER_IP << EOF
+            sudo systemctl stop yourapp || true
+            sudo mv $PROJECT_DIR/yourapp /usr/local/bin/yourapp
+            sudo systemctl start yourapp
+          EOF
+
+      - name: Test
+        run: go test -v ./...
