@@ -97,6 +97,6 @@ func TestCreateEvent(t *testing.T) {
 
 	// Check if all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
+		t.Errorf("there were unfulfilled expectation: %s", err)
 	}
 }
