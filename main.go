@@ -51,7 +51,7 @@ func singleEventHandler(res http.ResponseWriter, req *http.Request) {
 		events.GetEvent(res, req)
 	default:
 		fmt.Print(http.MethodPatch)
-		http.Error(res, "Method not allowed there", http.StatusMethodNotAllowed)
+		http.Error(res, "Method not allowed there or what", http.StatusMethodNotAllowed)
 	}
 }
 
